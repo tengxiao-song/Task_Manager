@@ -13,7 +13,7 @@ function FactList(props) {
             {" "}
             <ul className="facts-list">
                 {props.facts.map((fact) => (
-                    <Fact key={fact.id} fact={fact} setFacts={props.setFacts} isValidHttpUrl={props.isValidHttpUrl} CATEGORIES={props.CATEGORIES} />
+                    <Fact key={fact._id} fact={fact} setFacts={props.setFacts} isValidHttpUrl={props.isValidHttpUrl} CATEGORIES={props.CATEGORIES} />
                 ))}
             </ul>
         </section>

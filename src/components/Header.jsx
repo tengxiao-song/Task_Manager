@@ -10,7 +10,6 @@ function Header(props) {
             </div>
             <button
                 className="btn btn-large btn-open"
-                //2.update state variable
                 onClick={() => props.setShowForm((show) => !show)}
             >
                 {props.showForm ? "Close" : "Create a task"}

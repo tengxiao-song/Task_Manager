@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import supabase from "../supabase";
+
+const apiurl = "http://localhost:4000";
 
 function Fact(props) {
     const [isUpdating, setIsUpdating] = useState(false);
@@ -17,45 +18,52 @@ function Fact(props) {
     async function handleDelete() {
         try {
             setIsUpdating(true);
+            try {
+                const response = await fetch(`${apiurl}/deleteFact/${props.fact._id}`, {
+                    method: 'DELETE',
+                });
 
-            if (!props.fact) {
-                console.error("Fact object is null or undefined");
-                return;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error deleting fact:', error);
             }
-
-            // Delete the fact from Supabase
-            const { error } = await supabase.from("facts").delete().eq("id", props.fact.id);
 
             setIsUpdating(false);
+            props.setFacts((facts) => facts.filter((f) => f._id !== props.fact._id));
 
-            console.log("Deletion Error:", error);
-
-            if (!error) {
-                // Update the UI by removing the deleted fact
-                props.setFacts((facts) => facts.filter((f) => f.id !== props.fact.id));
-            }
         } catch (error) {
             console.error("Error in handleDelete:", error);
         }
     }
 
     async function handleVote() {
+        const id = props.fact._id;
         setIsUpdating(true);
-        const { data: updatedFact, error } = await supabase
-            .from("facts")
-            .update({ ["votesInteresting"]: props.fact["votesInteresting"] + 1 })
-            .eq("id", props.fact.id)
-            .select();
-        setIsUpdating(false);
-        console.log(updatedFact);
-        if (!error)
+        try {
+            const response = await fetch(`http://localhost:4000/updateVotes/${id}`, {
+                method: 'PATCH',
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
             props.setFacts((facts) =>
-                facts.map((f) => (f.id === props.fact.id ? updatedFact[0] : f))
+                facts.map((f) => (f._id === id ? result[0] : f))
             );
+
+        } catch (error) {
+            console.error('Error upvoting:', error);
+        }
+        setIsUpdating(false);
     }
 
     return (
-        <li className="fact" key={props.fact.id}>
+        <li className="fact" key={props.fact._id}>
             <p>
                 {props.fact.text}
                 <a className="source" href={props.fact.source} target="_blank" rel="noreferrer">
@@ -66,15 +74,14 @@ function Fact(props) {
             <span
                 className="tag"
                 style={{
-                    backgroundColor: props.CATEGORIES.find((cat) => cat.name === props.fact.category)
-                        .color,
+                    backgroundColor: props.CATEGORIES.find((cat) => cat.name === props.fact.category)?.color,
                 }}
             >
                 {props.fact.category}
             </span>
             <div className="vote-buttons">
                 <button onClick={handleVote} disabled={isUpdating}>
-                    👍 {props.fact.votesInteresting}
+                    🔥 {props.fact.votes}
                 </button>
                 <button className="delete-buttons" onClick={handleDelete}>
                     Delete

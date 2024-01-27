@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import supabase from "../supabase";
 
 function NewFactForm(props) {
     const [text, setText] = useState("");
@@ -9,39 +8,33 @@ function NewFactForm(props) {
     const textLength = text.length;
 
     async function handleSubmit(e) {
-        //1.provent browswer reload
         e.preventDefault();
-        console.log(text, source, category);
-        //2.Chekc if data is valid. If so, create a new fact
         if (text && category && textLength <= 200) {
-            //3.create a new fact Object
-            // const newFact = {
-            //   id: Math.round(Math.random() * 1000000),
-            //   text,
-            //   source,
-            //   category,
-            //   votesInteresting: 0,
-            //   votesMindblowing: 0,
-            //   votesFalse: 0,
-            //   createdIn: new Date().getFullYear(),
-            // };
-
-            // 3.Upload object to Supabase  and receive the new
-            //fact object
             setIsUploading(true);
-            const { data: newFact, error } = await supabase
-                .from("facts")
-                .insert([{ text, source, category }])
-                .select();
+            let newFact = { text: text, category: category, source: source };
+            try {
+                const response = await fetch('http://localhost:4000/addFact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', //don't delete
+                    },
+                    body: JSON.stringify(newFact),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                } else {
+                    newFact = await response.json();
+                    props.setFacts((facts) => [newFact[0], ...facts]);
+                }
+            } catch (error) {
+                console.error('Error adding fact:', error);
+            }
             setIsUploading(false);
 
-            //4.Add the new fact to the UI: Add the fact to state
-            if (!error) props.setFacts((facts) => [newFact[0], ...facts]);
-            //5.Reset the input field to empty
             setText("");
             setSource("");
             setCategory("");
-            //6.Create the form
             props.setShowForm(false);
         }
     }

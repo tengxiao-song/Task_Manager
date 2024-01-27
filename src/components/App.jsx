@@ -1,5 +1,4 @@
 import "../style.css";
-import supabase from "../supabase";
 import { useEffect, useState } from "react";
 import * as React from "react";
 import Loader from "./Loader";
@@ -20,7 +19,6 @@ const CATEGORIES = [
 ];
 
 function App() {
-  //1.Define state variable
   const [showForm, setShowForm] = useState(false);
   const [facts, setFacts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,14 +28,14 @@ function App() {
     function () {
       async function getFacts() {
         setIsLoading(true);
-        let query = supabase.from("facts").select("*");
-        if (currentCategory !== "all")
-          query = query.eq("category", currentCategory);
-        const { data: facts, error } = await query
-          .order("votesInteresting", { ascending: false })
-          .limit(1000);
-        if (!error) setFacts(facts);
-        else alert("There was a problem getting data");
+        let response = await fetch(`http://localhost:4000?category=${currentCategory}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        else {
+          let data = await response.json()
+          setFacts(data);
+        }
         setIsLoading(false);
       }
       getFacts();
